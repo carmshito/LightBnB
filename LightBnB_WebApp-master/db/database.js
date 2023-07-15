@@ -24,26 +24,16 @@ pool.query(`SELECT title FROM properties LIMIT 10;`)
  */
 const getUserWithEmail = function(email) {
   return pool
-    .query(`SELECT email FROM users
+    .query(`SELECT * FROM users
             WHERE LOWER(email) = $1`, [email.toLowerCase()])
-    .then((result) => {
-      if (!result.rows.length) {
-        return result.rows[0];
-      }
-      return null;
+    .then((response) => {
+      console.log(response.rows[0]);
+      const user = response.rows[0];
+      return user;
     })
     .catch((err) => {
       console.log(err.message);
     });
-  /* let resolvedUser = null;
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email.toLowerCase() === email.toLowerCase()) {
-      resolvedUser = user;
-    }
-  }
-  return Promise.resolve(resolvedUser);
-  */
 
 };
 
@@ -53,7 +43,17 @@ const getUserWithEmail = function(email) {
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = function(id) {
-  return Promise.resolve(users[id]);
+  return pool
+    .query(`SELECT * FROM users
+            WHERE id = $1`, [id])
+    .then((response) => {
+      console.log(response.rows[0]);
+      const user = response.rows[0];
+      return user;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 };
 
 /**
