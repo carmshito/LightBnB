@@ -27,9 +27,12 @@ const getUserWithEmail = function(email) {
     .query(`SELECT * FROM users
             WHERE LOWER(email) = $1`, [email.toLowerCase()])
     .then((response) => {
-      console.log(response.rows[0]);
-      const user = response.rows[0];
-      return user;
+      if (response.rows.length > 0) {
+        console.log(response.rows[0]);
+        const user = response.rows[0];
+        return user;
+      }
+      return null;
     })
     .catch((err) => {
       console.log(err.message);
@@ -47,9 +50,12 @@ const getUserWithId = function(id) {
     .query(`SELECT * FROM users
             WHERE id = $1`, [id])
     .then((response) => {
-      console.log(response.rows[0]);
-      const user = response.rows[0];
-      return user;
+      if (response.rows.length > 0) {
+        console.log(response.rows[0]);
+        const user = response.rows[0];
+        return user;
+      }
+      return null;
     })
     .catch((err) => {
       console.log(err.message);
@@ -62,10 +68,17 @@ const getUserWithId = function(id) {
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser = function(user) {
-  const userId = Object.keys(users).length + 1;
-  user.id = userId;
-  users[userId] = user;
-  return Promise.resolve(user);
+  return pool
+    .query(`INSERT INTO users (name, email, password)
+            VALUES ($1, $2, $3)`, [user.name, user.email, user.password])
+    .then((response) => {
+      console.log(response.rows[0]);
+      const user = response.rows[0];
+      return user;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 };
 
 /// Reservations
