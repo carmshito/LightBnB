@@ -1,5 +1,9 @@
 # LightBnB
 
+## Project Description
+
+LightBnB is a simple multi-page Airbnb cline that uses a server-side Javscript to display the information from queries to web pages via SQL queries.
+
 ## Project Structure
 
 ```
@@ -53,3 +57,4 @@
 * `routes` contains the router files which are responsible for any HTTP requests to `/users/something` or `/api/something`. 
 * `styles` contains all of the sass files. 
 * `server.js` is the entry point to the application. This connects the routes to the database.
+
