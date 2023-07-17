@@ -121,7 +121,7 @@ const getAllProperties = function(options, limit = 10) {
   let queryString = `
     SELECT properties.*, avg(property_reviews.rating) as average_rating
     FROM properties
-    JOIN property_reviews ON properties.id = property_id
+    LEFT JOIN property_reviews ON properties.id = property_id
     `;
 
   // 3. Check if a city has been passed in as an option. Add the city to the params array and create a WHERE clause for the city.
@@ -130,6 +130,7 @@ const getAllProperties = function(options, limit = 10) {
     queryString += `WHERE city LIKE $${queryParams.length}`;
   }
 
+  // if an owner_id is passed in, only return properties belonging to that owner
   if (options.owner_id) {
     queryParams.push(`%${options.owner_id}`);
     // checks if the options object has owner_id property and if it is the first parameter use the WHERE clause, if not use the AND clause to the query string
@@ -140,8 +141,9 @@ const getAllProperties = function(options, limit = 10) {
     }
   }
 
+  // if a minimum_price_per_night and a maximum_price_per_night, only return properties within that price range
   if (options.minimum_price_per_night && options.maximum_price_per_night) {
-    queryParams.push(options.minimum_price_per_night * 100, options.maximum_price_per_night * 100);
+    queryParams.push(parseInt(options.minimum_price_per_night * 100), parseInt(options.maximum_price_per_night * 100));
     if (queryParams.length === 2) {
       queryString += `WHERE cost_per_night >= $${queryParams.length - 1} AND cost_per_night <= $${queryParams.length}`;
     } else {
@@ -152,8 +154,8 @@ const getAllProperties = function(options, limit = 10) {
   // 4 Add any query that comes after the WHERE clause
   queryString += `
   GROUP BY properties.id`;
-  
-  // if minimum_rating property is in options object, add HAVING query to queryString
+
+  // if a minimum_rating is passed in, only return properties with an average rating equal to or higher than that
   if (options.minimum_rating) {
     queryParams.push(options.minimum_rating);
     queryString += `
@@ -182,10 +184,52 @@ const getAllProperties = function(options, limit = 10) {
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  const queryParams = [
+    property.owner_id,
+    property.title,
+    property.description,
+    property.thumbnail_photo_url,
+    property.cover_photo_url,
+    property.cost_per_night,
+    property.parking_spaces,
+    property.number_of_bathrooms,
+    property.number_of_bedrooms,
+    property.country,
+    property.street,
+    property.city,
+    property.province,
+    property.post_code,
+  ];
+
+  const queryString = `
+  INSERT INTO properties (
+    owner_id,
+    title,
+    description,
+    thumbnail_photo_url,
+    cover_photo_url, 
+    cost_per_night,
+    parking_spaces,
+    number_of_bathrooms,
+    number_of_bedrooms,
+    country,
+    street,
+    city,
+    province,
+    post_code
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  RETURNING *;
+  `;
+
+  return pool
+    .query(queryString, queryParams)
+    .then((result) => {
+      return result.rows[0];
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 module.exports = {
