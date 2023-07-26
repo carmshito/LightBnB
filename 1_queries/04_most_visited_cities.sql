@@ -1,4 +1,4 @@
-SELECT properties.city, count(reservations) as total_reservations
+SELECT properties.city, COUNT(reservations) AS total_reservations
 FROM reservations
 JOIN properties ON property_id = properties.id
 GROUP BY properties.city
