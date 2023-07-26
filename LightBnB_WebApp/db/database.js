@@ -1,5 +1,3 @@
-const properties = require("./json/properties.json");
-const users = require("./json/users.json");
 const { Pool } = require('pg');
 
 const config = {
@@ -10,10 +8,6 @@ const config = {
 };
 
 const pool = new Pool(config);
-
-pool.query(`SELECT title FROM properties LIMIT 10;`)
-  .then(response => {
-  });
 
 /// Users
 
@@ -28,7 +22,6 @@ const getUserWithEmail = function(email) {
             WHERE LOWER(email) = $1`, [email.toLowerCase()])
     .then((response) => {
       if (response.rows.length > 0) {
-        console.log(response.rows[0]);
         const user = response.rows[0];
         return user;
       }
@@ -51,7 +44,6 @@ const getUserWithId = function(id) {
             WHERE id = $1`, [id])
     .then((response) => {
       if (response.rows.length > 0) {
-        console.log(response.rows[0]);
         const user = response.rows[0];
         return user;
       }
@@ -70,9 +62,8 @@ const getUserWithId = function(id) {
 const addUser = function(user) {
   return pool
     .query(`INSERT INTO users (name, email, password)
-            VALUES ($1, $2, $3)`, [user.name, user.email, user.password])
+            VALUES ($1, $2, $3) RETURNING *;`, [user.name, user.email, user.password])
     .then((response) => {
-      console.log(response.rows[0]);
       const user = response.rows[0];
       return user;
     })
@@ -90,7 +81,7 @@ const addUser = function(user) {
  */
 const getAllReservations = function(guest_id, limit = 10) {
   return pool
-    .query(`SELECT properties.*, reservations.*, AVG(rating) as average_rating
+    .query(`SELECT properties.*, reservations.*, AVG(rating) AS average_rating
     FROM reservations 
     JOIN properties ON reservations.property_id = properties.id
     JOIN property_reviews ON properties.id = property_reviews.property_id
@@ -119,7 +110,7 @@ const getAllProperties = function(options, limit = 10) {
   const queryParams = [];
   // 2. Start the query with all information that comes before the WHERE clause
   let queryString = `
-    SELECT properties.*, avg(property_reviews.rating) as average_rating
+    SELECT properties.*, AVG(property_reviews.rating) AS average_rating
     FROM properties
     LEFT JOIN property_reviews ON properties.id = property_id
     `;
@@ -132,7 +123,7 @@ const getAllProperties = function(options, limit = 10) {
 
   // if an owner_id is passed in, only return properties belonging to that owner
   if (options.owner_id) {
-    queryParams.push(`%${options.owner_id}`);
+    queryParams.push(`${options.owner_id}`);
     // checks if the options object has owner_id property and if it is the first parameter use the WHERE clause, if not use the AND clause to the query string
     if (queryParams.length === 0) {
       queryString += `WHERE owner_id = $${queryParams.length}`;
@@ -159,7 +150,7 @@ const getAllProperties = function(options, limit = 10) {
   if (options.minimum_rating) {
     queryParams.push(options.minimum_rating);
     queryString += `
-    HAVING avg(property_reviews.rating) >= $${queryParams.length}`;
+    HAVING AVG(property_reviews.rating) >= $${queryParams.length}`;
   }
 
   // ORDER BY cost per night and add LIMIT queryString
@@ -168,9 +159,6 @@ const getAllProperties = function(options, limit = 10) {
   ORDER BY cost_per_night
   LIMIT $${queryParams.length};
   `;
-
-  // 5 Console log everything just to make sure we've done it right
-  console.log(queryString, queryParams);
 
   // 6 Run the query
   return pool.query(queryString, queryParams)
@@ -184,13 +172,17 @@ const getAllProperties = function(options, limit = 10) {
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
+
+  // convert cost_per_night from dollars to cents
+  const costPerNightCents = (property.cost_per_night * 100);
+
   const queryParams = [
     property.owner_id,
     property.title,
     property.description,
     property.thumbnail_photo_url,
     property.cover_photo_url,
-    property.cost_per_night,
+    costPerNightCents,
     property.parking_spaces,
     property.number_of_bathrooms,
     property.number_of_bedrooms,
@@ -225,6 +217,7 @@ const addProperty = function(property) {
   return pool
     .query(queryString, queryParams)
     .then((result) => {
+      console.log(result.rows[0]);
       return result.rows[0];
     })
     .catch((err) => {
