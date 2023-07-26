@@ -4,6 +4,16 @@
 
 LightBnB is a simple multi-page Airbnb cline that uses a server-side Javscript to display the information from queries to web pages via SQL queries.
 
+## Final Product
+
+![Alt text](image-2.png)
+
+![Alt text](image-3.png)
+
+## Project ERD
+
+![Alt text](image-1.png)
+
 ## Project Structure
 
 ```
@@ -58,3 +68,17 @@ LightBnB is a simple multi-page Airbnb cline that uses a server-side Javscript t
 * `styles` contains all of the sass files. 
 * `server.js` is the entry point to the application. This connects the routes to the database.
 
+## Getting Started
+
+1. Clone this repository onto your local device.
+2. Install dependencies with `npm install`.
+3. Start the web server using the command `npm run local`.
+4. Go to http://localhost:3000/ in your browser.
+
+## Dependencies
+* "bcrypt": "^3.0.6",
+* "cookie-session": "^1.3.3",
+* "express": "^4.17.1",
+* "nodemon": "^1.19.1",
+* "pg": "^8.11.1",
+* "psql": "0.0.1"
